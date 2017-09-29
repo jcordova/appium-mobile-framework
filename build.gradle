@@ -1,0 +1,60 @@
+group 'com.appium.mobile.framework'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+apply plugin: 'maven'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    testCompile 'com.epam.jdi:jdi-uitest-mobile:1.0.76'
+    testCompile 'com.github.saikrishna321:AppiumTestDistribution:7.0.1'
+    testCompile 'org.assertj:assertj-core-java8:1.0.0m1'
+    testCompile 'org.slf4j:slf4j-simple:1.7.25'
+    testCompile 'org.hamcrest:java-hamcrest:2.0.0.0'
+    testCompile 'org.hamcrest:hamcrest-all:1.3'
+    testCompile 'org.testng:testng:6.11'
+}
+
+test {
+    testLogging {
+        showStandardStreams = true
+    }
+    systemProperties(System.getProperties())
+    maxParallelForks = 8
+    ignoreFailures true
+}
+
+import org.gradle.internal.os.OperatingSystem;
+
+task setupAppium(type:Exec) {
+
+    group 'com.appium.mobile.framework'
+    description 'Runs script to setup Appium'
+
+    workingDir "$projectDir"
+
+    String osName = OperatingSystem.current().getName()
+    String osVersion = OperatingSystem.current().getVersion()
+    println "*** $osName $osVersion was detected."
+
+    if (OperatingSystem.current().isMacOsX()) {
+        commandLine 'sh', '-c', './setup_appium_mac.sh'
+    } else if (OperatingSystem.current().isWindows()) {
+        commandLine 'cmd', '/C', 'start', 'setup_appium_windows.bat'
+    } else if (OperatingSystem.current().isLinux()) {
+        commandLine 'sh', '-c', './setup_appium_linux.sh'
+    } else if (OperatingSystem.current().isUnix()) {
+        println "This Unix OS is not supported."
+    } else {
+        println "Unrecognize OS."
+    }
+}
