@@ -49,8 +49,10 @@ task setupAppium(type:Exec) {
     if (OperatingSystem.current().isMacOsX()) {
         commandLine 'sh', '-c', './setup_appium_mac.sh'
     } else if (OperatingSystem.current().isWindows()) {
-        commandLine 'cmd', '/C', 'start', 'setup_appium_windows.bat'
+        commandLine 'PowerShell', '.\setup_appium_windows.ps1'
     } else if (OperatingSystem.current().isLinux()) {
+        systemProperty "password", System.getProperty("password")
+        runner.withArguments("-Ppassword=" + System.getProperty("password"))
         commandLine 'sh', '-c', './setup_appium_linux.sh'
     } else if (OperatingSystem.current().isUnix()) {
         println "This Unix OS is not supported."
