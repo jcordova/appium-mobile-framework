@@ -15,6 +15,7 @@ repositories {
 }
 
 dependencies {
+    compile 'com.aimmac23:selenium-video-node:2.0'
     testCompile 'com.epam.jdi:jdi-uitest-mobile:1.0.76'
     testCompile 'com.github.saikrishna321:AppiumTestDistribution:7.0.1'
     testCompile 'org.assertj:assertj-core-java8:1.0.0m1'

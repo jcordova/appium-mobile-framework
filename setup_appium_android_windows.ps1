@@ -35,7 +35,6 @@ Check-RunAsAdministrator
 #Place your script here.
 write-host "Welcome"
 
-
 # ----------------------------------------------------------------------------------------------------------
 
 # Check if Command or App exist Function
@@ -62,9 +61,7 @@ Function Test-CommandExists
     }
 } #end function test-CommandExists
 
-
 # ----------------------------------------------------------------------------------------------------------
-
 
 If(!(Test-CommandExists choco))
 {

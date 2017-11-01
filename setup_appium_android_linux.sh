@@ -1,116 +1,143 @@
 #!/bin/sh
 
-# Install dependencies libraries for Linuxbrew based on Linux distro
-if [ "$(command -v apt-get)" ]; then
-	# For Ubuntu or Debian-based Linux distributions
-    sudo apt-get update
-    sudo apt-get install -y build-essential curl file git python-setuptools ruby
-
-    # Install Oracle JDK 8
-    sudo apt-get purge openjdk-\*
-    sudo add-apt-repository ppa:webupd8team/java
-	sudo apt-get update
-	sudo apt-get install -y oracle-java8-installer
-
-	# Set Java environment
-	sudo apt install oracle-java8-set-default
-
-	# Test Java installation
-	# export JAVA_HOME=/usr/java/jdk1.8.0
-	javac -version
-	echo $JAVA_HOME
-
-elif [ "$(command -v yum)" ]; then
-	# For CentOS based Linux distributions
-	sudo yum update
-    sudo yum groupinstall -y 'Development Tools' && sudo yum install -y curl file git irb python-setuptools ruby
-
-    # Install Oracle JDK 8
-    sudo yum remove -y java*
-	wget --no-cookies \
-	--no-check-certificate \
-	--header "Cookie: oraclelicense=accept-securebackup-cookie" \
-	"http://download.oracle.com/otn-pub/java/jdk/8-b132/jdk-8-linux-x64.rpm" \
-	-O jdk-8-linux-x64.rpm
-	sudo rpm -Uvh jdk-8-linux-x64.rpm
-	sudo alternatives --install -y /usr/bin/java java /usr/java/jdk1.8.0/jre/bin/java 20000
-	sudo alternatives --install -y /usr/bin/jar jar /usr/java/jdk1.8.0/bin/jar 20000
-	sudo alternatives --install -y /usr/bin/javac javac /usr/java/jdk1.8.0/bin/javac 20000
-	sudo alternatives --install -y /usr/bin/javaws javaws /usr/java/jdk1.8.0/jre/bin/javaws 20000
-	sudo alternatives --set java -y /usr/java/jdk1.8.0/jre/bin/java
-	sudo alternatives --set javaws /usr/java/jdk1.8.0/jre/bin/javaws
-	sudo alternatives --set javac /usr/java/jdk1.8.0/bin/javac
-	sudo alternatives --set jar /usr/java/jdk1.8.0/bin/jar
-
-	# Test Java installation
-	java -version
-	# export JAVA_HOME=/usr/java/jdk1.8.0
-	echo $JAVA_HOME
-
-fi
-
+# ------------------
 # Install Linuxbrew
-if [ $(dpkg-query -W -f='${Status}' brew 2>/dev/null | grep -c "brew is already installed") -eq 0 ]; then
+# ------------------
 
-	# Install Linuxbrew package manager
+if ! [ -x "$(command -v brew)" ]; then
+
+    # STEP 1. Install dependencies based on Linux distro 
+    
+    # For Ubuntu or Debian-based Linux distributions
+    if [ "$(command -v apt-get)" ]; then
+        sudo apt-get update
+        sudo apt-get install -y build-essential curl file git python-setuptools ruby
+        
+    # For CentOS based Linux distributions
+    elif [ "$(command -v yum)" ]; then  
+        sudo yum update
+        sudo yum groupinstall -y 'Development Tools' && sudo yum install -y curl file git irb python-setuptools ruby
+    fi
+
+	# STEP 2. Install Linuxbrew package manager
+	
 	echo | ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install)"
 
-	# Set Linuxbrew system path
+	# STEP 3. Set Linuxbrew system path
+	
+    # For Ubuntu or Debian-based Linux distributions
 	if [ "$(command -v apt-get)" ]; then
-		# For Ubuntu or Debian-based Linux distributions
-	    echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >>~/.profile
-	    echo 'export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"' >>~/.profile
-	    echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >>~/.profile
+		echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >>~/.profile
+		echo 'export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"' >>~/.profile
+		echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >>~/.profile
+    		
+    # For CentOS based Linux distributions
 	elif [ "$(command -v yum)" ]; then
-		# For CentOS based Linux distributions
 		echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"' >>~/.bash_profile
-	    echo 'export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"' >>~/.bash_profile
-	    echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >>~/.bash_profile
+		echo 'export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"' >>~/.bash_profile
+		echo 'export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"' >>~/.bash_profile
 	fi
 
-    # export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
-	
-	# check brew dependencies
+	# Check Brew Installation
 	brew install gcc
 	brew doctor
 	brew help
 fi
 
-# Install NodeJS
-if [ $(dpkg-query -W -f='${Status}' node 2>/dev/null | grep -c "node is already installed") -eq 0 ]; then
-	brew update
-	brew install node
-	brew link node
+# -----------------------
+# Install NodeJS via brew
+# -----------------------
+
+if [ "$(command -v brew)" ]; then
+	if ! [ -x "$(command -v node)" ]; then
+		brew update
+		brew install node
+		brew link node
+	fi
 fi
 
-# Install Appium and dependencies 
-if [ $(dpkg-query -W -f='${Status}' appium 2>/dev/null | grep -c "appium is already installed") -eq 0 ]; then
-	npm install -g appium
-	npm install -g appium-doctor
-	npm install -g wd
+# ---------------------------------
+# Install Android SDK API/BuildTool
+# ---------------------------------
+
+if [ "$(command -v java)" ]; then
+
+	# Veify if Oracle JDK 9 is already installed or not.
+	VER=`java -version 2>&1 | grep "java version" | awk '{print $3}' | tr -d \" | awk '{split($0, array, ".")} END{print array[1]}'`
+	if [ $VER != 9 ]; then
+		echo "You must install Oracle JDK 9 before continue ... "
+		exit
+	fi
+
+	# Install Android SDK if it is NOT installed.
+	if ! [ -x "$(command -v android)" ]; then
+
+		# STEP 1 - Download android sdk
+
+		wget http://dl.google.com/android/android-sdk_r24.2-linux.tgz
+		tar -xvf android-sdk_r24.2-linux.tgz
+		cd android-sdk-linux/tools
+
+		# STEP 2 - Install all sdk packages
+
+		./android update -y sdk --no-ui
+
+		# STEP 3 - Set path
+
+		vi ~/.zshrc <<- EOT
+		export PATH=${PATH}:$HOME/sdk/android-sdk-linux/platform-tools:$HOME/sdk/android-sdk-linux/tools:$HOME/sdk/android-sdk-linux/build-tools/22.0.1/
+		EOT
+		source ~/.zshrc
+
+		# STEP 4 - Install dependencies based on Linux distro
+
+		# For Ubuntu or Debian-based Linux distributions
+		if [ "$(command -v apt-get)" ]; then
+			apt-get -f install
+			# adb
+			sudo apt-get install -y libc6:i386 libstdc++6:i386
+			# aapt
+			sudo apt-get install -y zlib1g:i386
+
+		# For CentOS based Linux distributions
+		elif [ "$(command -v yum)" ]; then
+			yum -f install
+			# adb
+			sudo yum install -y libc6:i386 libstdc++6:i386
+			# aapt
+			sudo yum install -y zlib1g:i386
+		fi
+
+		# STEP 5 - Set Android-SDK Permission
+		sudo chmod 705 /opt/android-sdk/tools/android
+ 	fi
+
+else
+	echo "You must install Oracle JDK 9 before continue ... "
+	exit
 fi
 
-# Test Appium installation
-appium -v
+# ---------------------------------------------
+# Install Appium and dependencies via node/npm
+# ---------------------------------------------
 
-# Install Macaca CLI for the Inspector
-if [ $(dpkg-query -W -f='${Status}' macaca 2>/dev/null | grep -c "macaca-cli is already installed") -eq 0 ]; then
-	npm install -g macaca-cli
-fi
+if [ "$(command -v npm)" ]; then
+	if ! [ -x "$(command -v appium)" ]; then	
+		npm install -g appium
+		npm install -g appium-doctor
+		npm install -g wd
+	fi
 
-# Install Android SDK
-if [ "$(command -v apt-get)" ]; then
-	sudo add-apt-repository ppa:ubuntu-desktop/ubuntu-make
-	sudo apt update 
-	sudo apt install -y ubuntu-make
-	umake android --accept-license
-#  else if [ "$(command -v yum)" ]; then
-	# echo
-fi
+	# Test Appium installation
+	appium -v
 
-# Install Macaca CLI for the Inspector
-if [ $(dpkg-query -W -f='${Status}' macaca 2>/dev/null | grep -c "app-inspector is already installed") -eq 0 ]; then
-	npm install -g app-inspector
+	# Install Macaca CLI and Macaca Inspector
+	if ! [ -x "$(command -v macaca)" ]; then
+		npm install -g macaca-cli
+		npm install -g app-inspector
+	fi
+
+	# Test Macaca installation
 	macaca doctor
 	appium-doctor
 fi
