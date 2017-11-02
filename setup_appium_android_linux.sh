@@ -65,8 +65,8 @@ if [ "$(command -v java)" ]; then
 	# Veify if Oracle JDK 9 is already installed or not.
 	VER=`java -version 2>&1 | grep "java version" | awk '{print $3}' | tr -d \" | awk '{split($0, array, ".")} END{print array[1]}'`
 	if [ $VER != 9 ]; then
-		echo "You must install Oracle JDK 9 before continue ... "
-		exit
+		echo "Ready to Install Oracle JDK 9"
+		install_jdk9
 	fi
 
 	# Install Android SDK if it is NOT installed.
@@ -113,8 +113,8 @@ if [ "$(command -v java)" ]; then
  	fi
 
 else
-	echo "You must install Oracle JDK 9 before continue ... "
-	exit
+    echo "Ready to Install Oracle JDK 9"
+    install_jdk9
 fi
 
 # ---------------------------------------------
@@ -141,3 +141,41 @@ if [ "$(command -v npm)" ]; then
 	macaca doctor
 	appium-doctor
 fi
+
+install_jdk9()
+{
+    if [ "$(command -v apt-get)" ]; then
+        sudo apt-get remove java*
+    elif [ "$(command -v yum)" ]; then
+        sudo yum -y remove java*
+    fi
+
+	# Installing Oracle JDK 9 from source
+	wget -c --header "Cookie: oraclelicense=accept-securebackup-cookie" \
+	"http://download.oracle.com/otn-pub/java/jdk/9.0.1+11/jdk-9.0.1_linux-x64_bin.tar.gz"
+	cp jdk-9_linux-x64_bin.tar.gz /opt
+	tar -xzf /opt/jdk-9_linux-x64_bin.tar.gz
+	rm /opt/jdk-9_linux-x64_bin.tar.gz
+
+	# Verifying Your Java Installation
+	java -version
+
+	# Setting Oracle JDK 9 As Default Java Instance
+	update-alternatives --install /usr/bin/java java /opt/jdk-9/bin/java 1000
+	update-alternatives --install /usr/bin/javac javac /opt/jdk-9/bin/javac 1000
+	update-alternatives --install /usr/bin/javadoc javadoc /opt/jdk-9/bin/javadoc 1000
+	update-alternatives --install /usr/bin/javap javap /opt/jdk-9/bin/javap 1000
+	update-alternatives --config java
+
+	# Setting up Java Environment Variables
+	# For Ubuntu or Debian-based Linux distributions
+	if [ "$(command -v apt-get)" ]; then
+		echo 'export JAVA_HOME=/opt/jdk-9' >>~/.profile
+		echo 'export PATH="$PATH:$JAVA_HOME/bin"' >>~/.profile
+
+	# For CentOS based Linux distributions
+	elif [ "$(command -v yum)" ]; then
+		echo 'export JAVA_HOME=/opt/jdk-9' >>~/.bash_profile
+		echo 'export PATH="$PATH:$JAVA_HOME/bin"' >>~/.bash_profile
+	fi
+}
