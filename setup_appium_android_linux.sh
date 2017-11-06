@@ -144,6 +144,7 @@ fi
 
 install_jdk9()
 {
+    # Remove all Java VM instances
     if [ "$(command -v apt-get)" ]; then
         sudo apt-get remove java*
     elif [ "$(command -v yum)" ]; then
@@ -172,7 +173,6 @@ install_jdk9()
 	if [ "$(command -v apt-get)" ]; then
 		echo 'export JAVA_HOME=/opt/jdk-9' >>~/.profile
 		echo 'export PATH="$PATH:$JAVA_HOME/bin"' >>~/.profile
-
 	# For CentOS based Linux distributions
 	elif [ "$(command -v yum)" ]; then
 		echo 'export JAVA_HOME=/opt/jdk-9' >>~/.bash_profile
